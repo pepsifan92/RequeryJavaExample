@@ -1,0 +1,9 @@
+.gradle/
+.idea/
+build/
+out/
+.idea_modules/
+*.iml
+*.log
+commitHash
+*.mv.db

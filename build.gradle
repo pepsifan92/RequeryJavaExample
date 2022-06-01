@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'application'
+//    id 'net.ltgt.apt-idea' version '0.19'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+mainClassName = 'org.example.Main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation('org.junit.jupiter:junit-jupiter-api:5.8.1')
+    implementation('org.junit.jupiter:junit-jupiter-engine:5.8.1')
+
+    //Logging
+    implementation(group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25')
+    implementation(group: 'ch.qos.logback', name: 'logback-classic', version:  '1.1.7')
+
+    //MySQL with Requery
+    implementation("org.mariadb.jdbc:mariadb-java-client:2.1.2")
+    implementation("com.h2database:h2:2.1.212")
+    implementation('io.requery:requery:1.5.1')
+    annotationProcessor('io.requery:requery-processor:1.1.0')
+}
+
+test {
+    useJUnitPlatform()
+}
