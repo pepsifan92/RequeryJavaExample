@@ -3,20 +3,17 @@ package org.example;
 import io.requery.Persistable;
 import io.requery.meta.EntityModel;
 import io.requery.sql.*;
-import org.example.entities.IDatedDeviceIdBase;
 import org.example.entities.Models;
 import org.example.entities.User;
 
 import java.sql.DriverManager;
-
-
 
 public class Main {
 
     public static void main(String[] args) {
         System.out.println("Hello world!");
 
-        EntityDataStore<Persistable> dataStore = null;
+        EntityDataStore<Persistable> dataStore;
 
         ConnectionProvider connectionProvider = () -> DriverManager.getConnection("jdbc:h2:./test", "sa", "");
 
@@ -28,20 +25,12 @@ public class Main {
         SchemaModifier schemaModifier = new SchemaModifier(configuration);
         schemaModifier.createTables(TableCreationMode.DROP_CREATE);
 
+        dataStore = new EntityDataStore<>(configuration);
 
-        // Create Datastore that is used for.. everything to do with the DB.
-        try {
-            dataStore = new EntityDataStore<>(configuration);
-        } catch (Exception e) {
-            System.out.println(e);
-        }
 
         User userTom = new User();
         userTom.setAge(22);
-        userTom.setDeviceNr(1);
-        userTom.setIsActive(false);
-
-        assert dataStore != null;
+        userTom.setName("Tom");
         User resultUser = dataStore.insert(userTom);
 
         System.out.print("resultUser:");
