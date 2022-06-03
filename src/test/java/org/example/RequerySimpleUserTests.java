@@ -5,7 +5,6 @@ import io.requery.meta.EntityModel;
 import io.requery.sql.*;
 import org.example.entities.Models;
 import org.example.entities.User;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +12,12 @@ import java.sql.DriverManager;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RequeryInsertTests {
+class RequerySimpleUserTests {
     static EntityDataStore<Persistable> dataStore = null;
 
     @BeforeAll
     static void setUp() {
-        ConnectionProvider connectionProvider = () -> DriverManager.getConnection("jdbc:h2:./test", "sa", "");
+        ConnectionProvider connectionProvider = () -> DriverManager.getConnection("jdbc:h2:./unittests", "sa", "");
 
         EntityModel model = Models.DEFAULT;
         Configuration configuration = new ConfigurationBuilder(connectionProvider, model)
@@ -34,24 +33,22 @@ class RequeryInsertTests {
     }
 
     static void insertTestUsers() {
-        User userTom = new User();
-        User userBob = new User();
+        final User userTom = new User();
+        final User userBob = new User();
         userTom.setAge(22);
-        userTom.setDeviceNr(1);
         userTom.setName("Tom");
 
         userBob.setAge(25);
-        userBob.setDeviceNr(1);
         userBob.setName("Bob");
 
-        User toom = dataStore.insert(userTom);
+        dataStore.insert(userTom);
         dataStore.insert(userBob);
     }
 
     @Test
     void checkInsertedUsersExist() {
-        User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
-        User bob = dataStore.select(User.class).where(User.ID.eq(2L)).get().first();
+        final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
+        final User bob = dataStore.select(User.class).where(User.ID.eq(2L)).get().first();
 
         assertEquals("Tom", tom.getName());
         assertEquals("Bob", bob.getName());
@@ -59,14 +56,14 @@ class RequeryInsertTests {
 
     @Test
     void checkUsersUpdateWorks() {
-        User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
+        final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
         assertEquals("Tom", tom.getName());
         assertEquals(22, tom.getAge());
 
         tom.setAge(99);
         assertEquals(99, dataStore.update(tom).getAge()); // Update and check result
 
-        User secondQueryTom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
+        final User secondQueryTom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
         assertEquals(99, secondQueryTom.getAge());
 
         // Update back to 22 and check result
@@ -78,15 +75,17 @@ class RequeryInsertTests {
     void checkInsertOnlyCreatesAndNotUpdates() {
         assertEquals(2, dataStore.select(User.class).get().stream().count());
 
-        User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
+        final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
         assertEquals("Tom", tom.getName());
         assertEquals(22, tom.getAge());
 
         tom.setAge(10);
-        // Insert and check result
+        // Insert and check result - is should be a new row. Not any update or relation to previous entries/rows.
         User insertedTom = dataStore.insert(tom);
         assertEquals(3, dataStore.select(User.class).get().stream().count());
         assertEquals(10, insertedTom.getAge());
-        assertTrue(insertedTom.getId() != 1);
+        assertEquals(3, insertedTom.getId()); // Ensure the inserted user has a new primary key
     }
+
+
 }

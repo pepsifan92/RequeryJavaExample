@@ -13,8 +13,7 @@ public interface IDatedDeviceIdBase extends Persistable {
     ZonedDateTime getCreateDateTime();
     void setCreateDateTime(ZonedDateTime time);
 
-    int getDeviceNr();
-    void setDeviceNr(int deviceNr);
+    Integer getAge();
 
     @PreInsert
     default void onPreInsert() {

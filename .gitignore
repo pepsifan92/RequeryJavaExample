@@ -6,4 +6,4 @@ out/
 *.iml
 *.log
 commitHash
-*.mv.db
+*.db
