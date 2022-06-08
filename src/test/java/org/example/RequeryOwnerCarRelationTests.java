@@ -7,19 +7,21 @@ import org.example.entities.Car;
 import org.example.entities.Models;
 import org.example.entities.Owner;
 import org.example.entities.User;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
-import java.sql.DriverManager;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class RequeryOwnerCarRelationTests {
     static EntityDataStore<Persistable> dataStore = null;
 
     @BeforeAll
     static void setUp() {
-        ConnectionProvider connectionProvider = () -> DriverManager.getConnection("jdbc:h2:./unittests", "sa", "");
+        ConnectionProvider connectionProvider = DBConnectionConfig::connection;
 
         EntityModel model = Models.DEFAULT;
         Configuration configuration = new ConfigurationBuilder(connectionProvider, model)
@@ -76,7 +78,8 @@ class RequeryOwnerCarRelationTests {
     }
 
     @Test
-    void checkInsertedUsersExist() {
+    @Order(0)
+    void checkInsertedCarsAndOwnersExist() {
         final Owner alice = dataStore.select(Owner.class).where(Owner.ID.eq(1L)).get().first();
         final Owner lisa = dataStore.select(Owner.class).where(Owner.ID.eq(2L)).get().first();
 
@@ -92,38 +95,94 @@ class RequeryOwnerCarRelationTests {
         assertEquals("VW2", lisa.getOwnersCars().get(1).getName());
     }
 
-//    @Test
-//    void checkUsersUpdateWorks() {
-//        final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
-//        assertEquals("Tom", tom.getName());
-//        assertEquals(22, tom.getAge());
-//
-//        tom.setAge(99);
-//        assertEquals(99, dataStore.update(tom).getAge()); // Update and check result
-//
-//        final User secondQueryTom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
-//        assertEquals(99, secondQueryTom.getAge());
-//
-//        // Update back to 22 and check result
-//        secondQueryTom.setAge(22);
-//        assertEquals(22, dataStore.update(secondQueryTom).getAge());
-//    }
-//
-//    @Test
-//    void checkInsertOnlyCreatesAndNotUpdates() {
-//        assertEquals(2, dataStore.select(User.class).get().stream().count());
-//
-//        final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
-//        assertEquals("Tom", tom.getName());
-//        assertEquals(22, tom.getAge());
-//
-//        tom.setAge(10);
-//        // Insert and check result - is should be a new row. Not any update or relation to previous entries/rows.
-//        User insertedTom = dataStore.insert(tom);
-//        assertEquals(3, dataStore.select(User.class).get().stream().count());
-//        assertEquals(10, insertedTom.getAge());
-//        assertEquals(3, insertedTom.getId()); // Ensure the inserted user has a new primary key
-//    }
+    @Test
+    @Order(1)
+    void checkOwnerUpdateWorks() {
+        final Owner alice = dataStore.select(Owner.class).where(Owner.ID.eq(1L)).get().first();
+        assertEquals(2, dataStore.select(Owner.class).get().stream().count(), "2 owners in table");
+
+        assertEquals(40, alice.getAge());
+        alice.setAge(50);
+        assertEquals(50, alice.getAge());
+
+        dataStore.update(alice);
+        final Owner aliceQueriedAgain = dataStore.select(Owner.class).where(Owner.ID.eq(1L)).get().first();
+        assertEquals(50, alice.getAge());
+        assertEquals(2, dataStore.select(Owner.class).get().stream().count(), "still 2 owners in table");
+    }
+
+
+    @Test
+    @Order(2)
+    void checkOwnerCopyAndInsertWorks() {
+        final Owner alice = dataStore.select(Owner.class).where(Owner.ID.eq(1L)).get().first();
+        assertEquals(2, dataStore.select(Owner.class).get().stream().count(), "2 owners in table");
+
+        assertEquals(50, alice.getAge());
+        alice.setAge(60);
+        assertEquals(60, alice.getAge());
+
+        dataStore.insert(alice);
+        assertEquals(3, dataStore.select(Owner.class).get().stream().count(), "3 owners in table after insert");
+
+        final Owner aliceCopy = dataStore.select(Owner.class).where(Owner.ID.eq(3L)).get().first();
+
+        assertEquals(2, aliceCopy.getOwnersCars().size());
+        assertEquals("Audi1", aliceCopy.getOwnersCars().get(0).getName());
+        assertEquals(4, dataStore.select(Car.class).get().stream().count(), "Still 4 cars. 2 from each owner. Only Owner Alice was copied, not their Cars so far.");
+    }
+
+    @Test
+    @Order(3)
+    void checkOwnerWithCarsCopyAndInsertWorks() {
+        final Owner alice = dataStore.select(Owner.class).where(Owner.ID.eq(1L)).get().first();
+        assertEquals(3, dataStore.select(Owner.class).get().stream().count(), "Owners in table");
+        assertEquals(4, dataStore.select(Car.class).get().stream().count(), "Cars in table");
+
+
+        assertEquals(60, alice.getAge());
+        alice.setAge(70);
+
+        List<Car> previousCars = new ArrayList<>(alice.getOwnersCars()); // IMPORTANT to create a copy of the list, otherwise the references of the elements keep the same
+        alice.getOwnersCars().clear(); // remove old cars as belonging
+        assertEquals(0, alice.getOwnersCars().size());
+        assertEquals(2, previousCars.size());
+
+        previousCars.forEach(car -> {
+            car.setName(car.getName() + "copy");
+            Car carCopy = new Car();
+            carCopy.setName(car.getName());
+            carCopy.setPlateNr(car.getPlateNr());
+
+
+            alice.getOwnersCars().add(car.copy());
+        });
+
+        assertEquals(2, alice.getOwnersCars().size());
+//        assertEquals("Audi1copy", alice.getOwnersCars().get(0).getName());
+
+
+        final Owner aliceInsertResult = dataStore.insert(alice);
+        assertEquals(4, dataStore.select(Owner.class).get().stream().count(), "Owners in table");
+        assertEquals(6, dataStore.select(Car.class).get().stream().count(), "Cars in table");
+
+        assertEquals(4, aliceInsertResult.getId());
+        assertEquals(2, aliceInsertResult.getOwnersCars().size());
+
+
+        final Owner newAlice = dataStore.select(Owner.class)
+                .where(Owner.ID.eq(aliceInsertResult.getId()))
+                .get()
+                .first();
+
+
+        assertEquals(2, newAlice.getOwnersCars().size());
+        assertEquals("Audi1copy", newAlice.getOwnersCars().get(0).getName());
+        assertEquals("Audi2copy", newAlice.getOwnersCars().get(1).getName());
+
+
+    }
+
 
 
 }

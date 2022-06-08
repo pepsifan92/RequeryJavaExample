@@ -1,12 +1,14 @@
 package org.example.entities;
 
-import io.requery.Entity;
-import io.requery.ManyToOne;
-import io.requery.Persistable;
+import io.requery.*;
 
 
-@Entity
-public interface ICar extends IIdBase {
+@Entity(copyable = true)
+public interface ICar {
+    @Key
+    @Generated
+    long getId();
+
     Integer getPlateNr();
     String getName();
 

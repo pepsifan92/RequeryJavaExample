@@ -17,7 +17,7 @@ class RequerySimpleUserTests {
 
     @BeforeAll
     static void setUp() {
-        ConnectionProvider connectionProvider = () -> DriverManager.getConnection("jdbc:h2:./unittests", "sa", "");
+        ConnectionProvider connectionProvider = DBConnectionConfig::connection;
 
         EntityModel model = Models.DEFAULT;
         Configuration configuration = new ConfigurationBuilder(connectionProvider, model)
