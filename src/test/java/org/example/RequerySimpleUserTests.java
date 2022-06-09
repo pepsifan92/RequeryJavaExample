@@ -8,8 +8,6 @@ import org.example.entities.User;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.sql.DriverManager;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class RequerySimpleUserTests {
@@ -46,7 +44,7 @@ class RequerySimpleUserTests {
     }
 
     @Test
-    void checkInsertedUsersExist() {
+    void TEST_INSERTED_USERS_EXIST() {
         final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
         final User bob = dataStore.select(User.class).where(User.ID.eq(2L)).get().first();
 
@@ -55,7 +53,7 @@ class RequerySimpleUserTests {
     }
 
     @Test
-    void checkUsersUpdateWorks() {
+    void TEST_USER_UPDATE() {
         final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();
         assertEquals("Tom", tom.getName());
         assertEquals(22, tom.getAge());
@@ -72,7 +70,7 @@ class RequerySimpleUserTests {
     }
 
     @Test
-    void checkInsertOnlyCreatesAndNotUpdates() {
+    void TEST_INSERT_ONLY_CREATE_NOT_UPDATES() {
         assertEquals(2, dataStore.select(User.class).get().stream().count());
 
         final User tom = dataStore.select(User.class).where(User.ID.eq(1L)).get().first();

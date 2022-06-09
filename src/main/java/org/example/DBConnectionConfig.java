@@ -17,6 +17,6 @@ public class DBConnectionConfig {
 
     private static Connection getH2Connection() throws SQLException {
 //        System.out.println("Using H2 Connection");
-        return DriverManager.getConnection("jdbc:h2:./unittests", "sa", "");
+        return DriverManager.getConnection("jdbc:h2:./requeryTest", "sa", "");
     }
 }

@@ -7,7 +7,8 @@ import io.requery.*;
 public interface ICar {
     @Key
     @Generated
-    long getId();
+    Long getId();
+    void setId(Long id);
 
     Integer getPlateNr();
     String getName();

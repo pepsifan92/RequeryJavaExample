@@ -7,7 +7,7 @@ import io.requery.query.MutableResult;
 
 import java.util.List;
 
-@Entity
+@Entity(copyable = true)
 public interface IOwner extends IDatedDeviceIdBase {
     String getName();
 

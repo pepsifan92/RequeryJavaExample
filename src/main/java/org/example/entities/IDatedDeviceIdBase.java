@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 public interface IDatedDeviceIdBase extends Persistable {
     @Key
     @Generated
-    long getId();
+    Long getId();
 
     ZonedDateTime getCreateDateTime();
     void setCreateDateTime(ZonedDateTime time);
